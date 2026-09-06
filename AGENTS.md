@@ -95,6 +95,20 @@ implementation is written, and the first push is red on purpose. Phase criteria 
 "compiles AND exercises every branch" — Plank only type-checks a comptime branch that something
 instantiates, so an un-instantiated branch is text the compiler has never seen.
 
+**Type development workflow (set 2026-09-06).** A new Plank type `Foo` is introduced with this
+file layout (reference: `LegStep`):
+
+1. `src/types/Foo.plk` — type module under the `types` Plank root.
+2. `test/harness/types/FooHarness.plk` — Plank harness entrypoint (deployed via `deployPlank`).
+3. `test/types/Foo.t.sol` — Foundry suite that imports `PlankTestBase` from
+   `test/PlankTestBase.sol`, inherits it, and declares a Solidity harness ABI interface
+   (e.g. `IFoo`, or a domain name such as `ILeg` for `LegStep`).
+
+Existing rules still apply: tests first / RED before the type API is implemented; chunk
+approve → commit → push → CI. Do not put new type harnesses under `test/types/` — that tree
+holds the `.t.sol` suites (and older co-located harnesses); new harnesses go under
+`test/harness/types/`.
+
 ## Docs
 
 - Foundry — https://book.getfoundry.sh
