@@ -1,0 +1,15 @@
+import types::Tick::Tick;
+import types::TickSpacing::TickSpacing;
+import std::core::uint::{cast_uint, u24};
+
+// TickRung(i, Δ, m) := Tick(i, Δ_raw) + LegStep · TickSpacing(Δ_raw).
+const TickRung = fn (tickVal: u256, rawTickSpacing: u256, step: $S) u256 {
+	comptime {
+		if S != u24 {
+			@compile_error("TickRung: pass LegStep(...) (u24)");
+		}
+	}
+	let i = Tick(tickVal, rawTickSpacing);
+	let d = cast_uint(TickSpacing(rawTickSpacing), u256);
+	i +% cast_uint(step, u256) *% d
+};

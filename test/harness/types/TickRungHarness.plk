@@ -1,0 +1,20 @@
+import std::constructor::return_runtime;
+import std::core::uint::{try_cast_uint, u24};
+import std::option::unwrap;
+import types::TickRung::TickRung;
+
+// cast sig "tickRung(int256,uint256,uint24)" -> 0xfa0709f9
+const SEL_TICK_RUNG = 0xfa0709f9;
+
+init { return_runtime(); }
+
+run {
+	let selector = @evm_shr(224, @evm_calldataload(0));
+	if selector == SEL_TICK_RUNG {
+		let step = unwrap(try_cast_uint(@evm_calldataload(68), u24));
+		let out = @malloc_uninit(32);
+		@mstore32(out, TickRung(@evm_calldataload(4), @evm_calldataload(36), step));
+		@evm_return(out, 32);
+	}
+	@evm_stop();
+}
