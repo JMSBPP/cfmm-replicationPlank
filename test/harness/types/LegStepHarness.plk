@@ -1,7 +1,7 @@
 import std::constructor::return_runtime;
 import std::core::uint::cast_uint;
-import cfmm_types::TickBucket::TickBucket;
-import cfmm_types::TickSpacing::TickSpacing;
+import types::TickBucket::TickBucket;
+import types::TickSpacing::TickSpacing;
 import types::LegStep::LegStep;
 
 // cast sig "legStep(uint24)" -> 0x56cee873
