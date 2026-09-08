@@ -1,0 +1,2 @@
+// Stub PoolV2 surface — behaviour deferred.
+const PoolV2 = struct {};
