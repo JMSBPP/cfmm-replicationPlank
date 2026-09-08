@@ -1,14 +1,18 @@
 # Local multi-chain helpers. `.env` is gitignored; CHAIN_A / CHAIN_B are RPC URLs.
+# Ports match foundry.toml [rpc_endpoints] chainA / chainB.
 
-# Start two anvils on free ports, upsert CHAIN_A / CHAIN_B into `.env`, then
-# source that file and fail unless both endpoints answer.
+# Ensure anvils on fixed ports, upsert CHAIN_A / CHAIN_B into `.env`, then
+# source that file and fail unless both endpoints answer. Idempotent if already live.
 init-chains:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    free_port() {
-        python3 -c 'import socket; s = socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
-    }
+    PORT_A=8545
+    PORT_B=8646
+    CHAIN_ID_A=31337
+    CHAIN_ID_B=3138
+    URL_A="http://127.0.0.1:${PORT_A}"
+    URL_B="http://127.0.0.1:${PORT_B}"
 
     upsert_env() {
         local key="$1" val="$2" file=".env"
@@ -18,6 +22,11 @@ init-chains:
         else
             printf '%s=%s\n' "$key" "$val" >> "$file"
         fi
+    }
+
+    port_busy() {
+        local port="$1"
+        python3 -c "import socket; s = socket.socket(); s.settimeout(0.2); r = s.connect_ex(('127.0.0.1', int('${port}'))); s.close(); raise SystemExit(0 if r == 0 else 1)"
     }
 
     wait_live() {
@@ -33,17 +42,24 @@ init-chains:
         return 1
     }
 
-    port_a="$(free_port)"
-    port_b="$(free_port)"
-    while [[ "$port_b" == "$port_a" ]]; do
-        port_b="$(free_port)"
-    done
+    ensure_anvil() {
+        local port="$1" chain_id="$2" url="$3" label="$4"
+        if cast chain-id --rpc-url "$url" >/dev/null 2>&1; then
+            return 0
+        fi
+        if port_busy "$port"; then
+            echo "error: ${label}: port ${port} is in use but not a live anvil RPC" >&2
+            return 1
+        fi
+        anvil --host 127.0.0.1 --port "$port" --chain-id "$chain_id" >/dev/null 2>&1 &
+        wait_live "$url" "$label"
+    }
 
-    anvil --host 127.0.0.1 --port "$port_a" --chain-id 31337 >/dev/null 2>&1 &
-    anvil --host 127.0.0.1 --port "$port_b" --chain-id 3138 >/dev/null 2>&1 &
+    ensure_anvil "$PORT_A" "$CHAIN_ID_A" "$URL_A" CHAIN_A
+    ensure_anvil "$PORT_B" "$CHAIN_ID_B" "$URL_B" CHAIN_B
 
-    upsert_env CHAIN_A "http://127.0.0.1:${port_a}"
-    upsert_env CHAIN_B "http://127.0.0.1:${port_b}"
+    upsert_env CHAIN_A "$URL_A"
+    upsert_env CHAIN_B "$URL_B"
 
     set -a
     # shellcheck disable=SC1091
