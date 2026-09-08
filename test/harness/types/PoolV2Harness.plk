@@ -1,8 +1,13 @@
 import std::constructor::return_runtime;
 import types::PoolV2::PoolV2;
 
+// Slot holding the last setChainId value.
+const CHAIN_ID_SLOT = 0;
+
 // cast sig "setChainId(uint256)" -> 0xef0e2ff4
 const SET_CHAIN_ID = 0xef0e2ff4;
+// cast sig "readChainId()" -> 0x66a24fbf
+const READ_CHAIN_ID = 0x66a24fbf;
 
 init { return_runtime(); }
 
@@ -11,7 +16,13 @@ run {
 	let _pool = PoolV2 {};
 	let selector = @evm_shr(224, @evm_calldataload(0));
 	if selector == SET_CHAIN_ID {
+		@evm_sstore(CHAIN_ID_SLOT, @evm_calldataload(4));
 		@evm_stop();
+	}
+	if selector == READ_CHAIN_ID {
+		let out = @malloc_uninit(32);
+		@mstore32(out, @evm_sload(CHAIN_ID_SLOT));
+		@evm_return(out, 32);
 	}
 	@evm_stop();
 }
