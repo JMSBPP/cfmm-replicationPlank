@@ -1,28 +1,21 @@
 import std::constructor::return_runtime;
-import types::PoolV2::PoolV2;
+import types::PoolV2::*;
 
-// Slot holding the last setChainId value.
-const CHAIN_ID_SLOT = 0;
 
-// cast sig "setChainId(uint256)" -> 0xef0e2ff4
+// cast sig "setChainId((uint256),uint256)"
 const SET_CHAIN_ID = 0xef0e2ff4;
-// cast sig "readChainId()" -> 0x66a24fbf
-const READ_CHAIN_ID = 0x66a24fbf;
+// cast sig "chainId((uint256))"
+const GET_CHAIN_ID = 0x3408e470;
 
 init { return_runtime(); }
 
 run {
-	// Keep the stub type in the compile graph.
-	let _pool = PoolV2 {};
 	let selector = @evm_shr(224, @evm_calldataload(0));
 	if selector == SET_CHAIN_ID {
-		@evm_sstore(CHAIN_ID_SLOT, @evm_calldataload(4));
-		@evm_stop();
+	   let poolV2: PoolV2 = addChainId(emptyPoolV2(), @evm_calldataload(4));
 	}
-	if selector == READ_CHAIN_ID {
-		let out = @malloc_uninit(32);
-		@mstore32(out, @evm_sload(CHAIN_ID_SLOT));
-		@evm_return(out, 32);
+	if selector == GET_CHAIN_ID {
+	
 	}
 	@evm_stop();
 }

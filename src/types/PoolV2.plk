@@ -1,2 +1,33 @@
-// Stub PoolV2 surface — behaviour deferred.
-const PoolV2 = struct {};
+import std::core::addr;
+
+const PoolV2 = struct {
+      chainId:u256,
+      _address: addr,
+      priceUpdateEvtSig:u256,
+      topic1:u256
+};
+
+const EMPTY_CHAIN_ID = 0;
+const EMPTY_ADDRESS = addr_from_u256(0);
+const EMPTY_PRICE_UPDATE_SIG = 0;
+const EMPTY_TOPIC_1 = 0;
+
+
+const emptyPoolV2 = fn () PoolV2 { PoolV2 {chainId : EMPTY_CHAIN_ID, _address: EMPTY_ADDRESS, priceUpdateEvtSig: EMPTY_PRICE_UPDATE_SIG, topic1: EMPTY_TOPIC_1}};
+
+const setChainId= fn(self:PoolV2, _chainId: u256 ) PoolV2 { PoolV2 {chainId : _chainId, _address: self.address, priceUpdateEvtSig: self.priceUpdateEvtSig, topic1: self.topic1 }};
+
+const chainId = fn(self:PoolV2) u256 {self.chainId};
+
+const setAddress = fn(self:PoolV2, _address: addr) PoolV2 { PoolV2 {chainId: self.chainId, _address: _address, priceUpdateEvtSig: self.priceUpdateEvtSig, topic1: self.topic1}};
+
+const address(self:PoolV2) addr {self._address};
+
+const setPriceUpdateEvtSig(self: PoolV2, priceUpdateEvtSig: u256) PoolV2 { PoolV2 {chainId : self.chainId, _address: self.address, priceUpdateEvtSig:priceUpdateEvtSig, topic1: self.topic1 }};
+
+const priceUpdateEvtSig(self:PoolV2) u256 {self.priceUpdateEvtSig};
+
+const setTopic1 (self:PoolV2, topic1: u256) PoolV2 {PoolV2 {chainId: self.chainId, address: self.address, priceUpdateEvtSig: self.priceUpdateEvtSig, topic1:topic1}};
+
+const topic1(self:PoolV2) u256 {self.topic1};
+
