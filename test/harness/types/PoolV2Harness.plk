@@ -1,0 +1,21 @@
+import std::constructor::return_runtime;
+import types::PoolV2::*;
+
+
+// cast sig "setChainId((uint256),uint256)"
+const SET_CHAIN_ID = 0xef0e2ff4;
+// cast sig "chainId((uint256))"
+const GET_CHAIN_ID = 0x3408e470;
+
+init { return_runtime(); }
+
+run {
+	let selector = @evm_shr(224, @evm_calldataload(0));
+	if selector == SET_CHAIN_ID {
+	   let poolV2: PoolV2 = addChainId(emptyPoolV2(), @evm_calldataload(4));
+	}
+	if selector == GET_CHAIN_ID {
+	
+	}
+	@evm_stop();
+}

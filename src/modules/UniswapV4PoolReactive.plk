@@ -1,0 +1,25 @@
+import std::constructor::return_runtime;
+import std::core::addr::{addr_from_u256, addr, cast_addr};
+
+// cast sig "setSystemContract(address)"
+const SET_SYSTEM_CONTRACT = 0x518e063a;
+// cast sig "getSystemContract()"
+const GET_SYSTEM_CONTRACT = 0xa7e8af8b;
+// cast keccak UniswapV4Reactive.SystemContract
+const SYSTEM_CONTRACT_SLOT = 0x4eefcdf752083dc4c8884c3df75cbd470ac01c97558efc3a7e8ef6810d093fde;
+
+init {return_runtime();}
+
+run {
+    let selector = @evm_shr(224, @evm_calldataload(0));
+    if selector == SET_SYSTEM_CONTRACT {
+       @evm_sstore(SYSTEM_CONTRACT_SLOT,@evm_calldataload(4));
+    } else if selector == GET_SYSTEM_CONTRACT {
+       let rawSyScontractAddr: u256 = @evm_sload(SYSTEM_CONTRACT_SLOT);
+       let ret_ptr = @malloc_uninit(32);
+       @mstore32(ret_ptr, cast_addr(addr_from_u256(rawSyScontractAddr),u256));
+       @evm_return(ret_ptr, 32);
+    }
+    @evm_stop();
+
+}

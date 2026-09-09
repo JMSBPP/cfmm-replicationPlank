@@ -44,3 +44,6 @@
 [submodule "lib/seaport"]
 	path = lib/seaport
 	url = https://github.com/ProjectOpenSea/seaport
+[submodule "lib/reactive-test-lib"]
+	path = lib/reactive-test-lib
+	url = https://github.com/Reactive-Network/reactive-test-lib
