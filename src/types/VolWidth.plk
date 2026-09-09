@@ -1,0 +1,10 @@
+import std::core::uint::{u24,try_cast_uint};
+
+// see ../.spec/VOL_WIDTH.md
+const VolWidth = u24;
+
+
+
+const mkVolWidth = fn(T: u256) u24 {
+      try_cast_uint(T,u24)
+};

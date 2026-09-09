@@ -1,0 +1,27 @@
+import types::VolWidth::{VolWidth,mkVolWidth};
+import std::core::uint::cast_uint;
+import cfmm_types::TickSpacing::TickSpacing;
+import cfmm_types::Tick::Tick;
+
+import std::constructor::return_runtime;
+
+const nextTick = fn(self:VolWidth, rawTickSpacing:u256, rawTick:u256) u256 {
+      Tick(Tick(rawTick, rawTickSpacing) + Tick(@evm_mul(cast_uint(self, u256),rawTickSpacing),rawTickSpacing), rawTickSpacing);
+};
+
+
+// cast sig "nextTick(uint256,uint256,int256)"
+const NEXT_TICK = 0x7099cfee;
+
+init{return_runtime();}
+run {
+    let selector = @evm_shr(224, @evm_calldataload(0));
+    if selector == NEXT_TICK {
+       let _nextTick: Tick = nextTick(mkVolWidth(@evm_calldataload(4)), @evm_calldataload(36), @evm_calldataload(68));
+       
+    }
+    @evm_stop();
+
+}
+
+
