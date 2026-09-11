@@ -263,17 +263,26 @@ Note that under this transformation we have:
 \]
 
 
-[Control](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/)  
+This ties the state to its lag under \(g\), but does not yet steer the path to target volatility.
 
-Recursion (Euler, drift-scaled):
+### Control layer (requirements)
 
-\[
-	\begin{aligned}
-		i_j &= i_{j-1} + \kappa\, D(i_{j-1}) + S(i_{j-1})\,\varepsilon_j, \\
-		D(i) &= \tfrac{\bar dt}{\beta}\,\mu(i), \qquad
-		S(i) = \sigma(i)\,\sqrt{\bar dt},
-	\end{aligned}
-\]
+**Goal.** Open-loop forge-cron schedule: diffusion-shaped tick path; noise from the Solidity seed⊕`blockhash` PRNG; one drift scalar pins \(i(N)\) implied by target \(\bar\sigma\).
 
-with \(\{\varepsilon_j\}\) exogenous (never refit). On the tick bucket, \(D,S\) are evaluated at the clamped state.
+**Given.**
 
+- \(\sigma(i)=e^{\alpha-\beta i}\), \(\beta=\ln 1.0001\), \(g(i)=e^{\beta i}\), inverse \(i=\ln(g(i))/\beta\).
+- Terminal: \(\sigma(N)=\bar\sigma \implies i(N)=(\alpha-\ln\bar\sigma)/\beta\).
+- Discrete tick increment form from the net-flow section (\(\mu(i),\sigma(i),\Delta W\)), with \(\Delta W_j=\sqrt{\bar dt}\,\varepsilon_j\).
+
+**Requirements.**
+
+1. **Inputs:** \(i(0)\), \(\bar\sigma\) (hence \(i(N)\)), \(\bar dt\), \(N\), and a fixed PRNG stream \(\{\varepsilon_j\}_{j=1}^{N}\) (abstract; interpret as derived from `keccak(seed, blockhash, j)`).
+2. **Recursion:** Propose \(i_j=i_{j-1}+\Delta i_j(\mu_\kappa,\varepsilon_j)\) where the drift is a one-parameter family \(\mu_\kappa=\kappa\cdot\mu(\cdot)\) (or an equivalent single scalar on the md drift).
+3. **Pin:** For any fixed \(\{\varepsilon_j\}\), construct (or uniquely determine) \(\kappa^\star\) such that \(i_N=i(N)\).
+4. **Preserve:** Keep the diffusion-coefficient / \(\sigma(i)\) profile; **do not** refit or replace \(\varepsilon_j\).
+5. **Output:** \(\{i_j\}_{j=0}^{N}\) and \(\kappa^\star\), sufficient for a forge script to evaluate the path after \(\varepsilon\) is known.
+
+**Out of scope for the formalization.** On-chain commit–reveal protocol, gas batching, Plank `TickState` / factory types.
+
+**Forge evaluation order (consumer).** Obtain \(\varepsilon\) → solve \(\kappa^\star\) → emit \(\{i_j\}\).
