@@ -283,24 +283,5 @@ with lag identity \(x_j = x_{j-1}\cdot g(\Delta i_j)\).
 
 **Out of scope.** Opaque IVT-only \(\kappa^\star\) without an explicit formula; on-chain commit–reveal protocol; Plank types.
 
-### Control layer (formalized — \(g\)-space)
-
-Lean: `.spec/REALIZED_VOLATILITY.lean/d9917276-397c-415e-bc84-ed728ad72ce5_aristotle/`  
-Module: `RequestProject/TickGSpaceControl.lean` (task `d9917276-…`).
-
-Multiplicative recursion with explicit gains:
-
-\[
-	\begin{aligned}
-		x_j &= A\, x_{j-1}\, B_j(\varepsilon_j), \qquad
-		B_j(u)=\exp(b_j\, u), \\
-		A &= \exp(\texttt{lnGainA}), \qquad
-		\texttt{lnGainA}
-		= \frac{(\alpha-\ln\bar\sigma-\beta\, i_0)-\sum_{j=1}^{N} b_j\varepsilon_j}{N}.
-	\end{aligned}
-\]
-
-Shock stream enters only via the finite sum \(\sum b_j\varepsilon_j\) (cron: one pass). Proved: \(x_N=e^{\alpha}/\bar\sigma\), \(y_N=\ln\bar\sigma\), lag identity \(x_j=x_{j-1}\cdot g(\Delta i_j)\), \(\sigma=e^{\alpha}/x\). No IVT / `Classical.choose`.
-
-Prior \(i\)-space drift-scale artifact (superseded): [ad1c3b4c…](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/).
+Prior \(i\)-space drift-scale artifact (superseded for control): [ad1c3b4c…](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/).
 
