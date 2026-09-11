@@ -93,8 +93,8 @@ Note that \(\sigma_{\text{factory}}\) is a *discrete time control macro*, formal
 
 \[
 	\begin{aligned}
-		i(t) = A\cdot i(t-1) + B \cdot u \\
-		\sigma (t) = C \cdot i(t) + D \cdot u 
+		i(t_i) = A\cdot i(t_{i-1}) + B \cdot u \\
+		\sigma (t_i) = C \cdot i(t_{i}) + D \cdot u 
 	\end{aligned}
 \]
 
@@ -106,19 +106,169 @@ with terminal condition:
 	\end{aligned}
 \]
 
+# MODEL
 
-Then:
-
-\[
-	\begin{aligned}
-		C \leftarrow \frac{\partial \sigma (t)}{\partial i(t)} = \, 2 (W)^{-1} \, \sum [i - i_{\mu}]
-	\end{aligned}
-\]
-
-And the terminal condition imposes structure on \(u\).
+Consider a net-flow numeriare diffusion as:
 
 \[
 	\begin{aligned}
-		u(N) \, &= \, D^{T} \, D^{-1} \, \Big [\bar  \sigma \, - \, C\cdot i(N)\Big]
+		\Delta Q_{M} (t_i) \, &= \mu_F \, \bar dt \, + \, \sigma_{F} \, \Delta W (t_i)
 	\end{aligned}
 \]
+
+From where on a fixed tick-bucket \([i_l, i_u]\):
+
+\[
+	\begin{aligned}
+		\Delta p (t_{i}) \, = \, \Big (\frac{2 \, \mu_F}{L_{1/2}} \,\sqrt{p (t_i)} + \, \frac{\sigma_F^2}{(L_{1/2})^2}\Big) \, \bar dt \, + \, \sigma (p (t_i)) \, \Delta \, W (t_i)
+	\end{aligned}
+\]
+Where \(\Delta W (t_i) = \sqrt{\bar dt} \, \cdot\, \epsilon \, (t_i); \quad \epsilon (t_i) \sim \mathcal{N} \, (0,1)\)
+
+
+By making \(\sigma (p) = \delta \, \sqrt{p} \) we have under CPMM, \(\delta = \frac{2\, \sigma_F}{ L_{1/2}}\)
+
+\[
+	\begin{aligned}
+		\Delta p (t_{i}) \, = \, \Big (\frac{2 \, \mu_F}{L_{1/2}} \,\sqrt{p (t_i)} + \, \frac{\sigma_F^2}{(L_{1/2})^2}\Big) \, \bar dt \, + \, \frac{2\, \sigma_F}{ L_{1/2}} \, \sqrt{p (t_i)} \, \Delta \, W (t_i)
+	\end{aligned}
+\]
+
+since \(i(p(t)) = \log_{1.0001} \sqrt{p(t)} \), then:
+
+\[
+	\begin{aligned}
+		\Delta i (t_i) \, = \, \frac{1}{\ln(1.0001)}
+\left[
+\frac{\mu_F}{L_{1/2}\sqrt{p \, (t_i)}}
+-\frac{\sigma_F^2}{2L_{1/2}^2p (t_i)}
+\right]\bar{dt}
+\\
+&+
+\frac{\sigma_F}
+{L_{1/2}\ln(1.0001)\sqrt{p (t_i)}}
+\Delta W (t_i), \\
+
+i(t_i) \, \in \, [i_l, i_u]
+	\end{aligned}
+\]
+
+
+Since \(\Delta i (t_i) \equiv i (t_i) - i (t_{i-1})\);
+
+\[
+	\begin{aligned}
+		\Delta i (t_i) \, &= \, (A -1 )\, i (t_{i-1}) \, + \, B \, u
+	\end{aligned}
+\]
+
+We pinned also a functional form of volatility with respecto to tickState as not being linear:
+
+\[
+	\begin{aligned}
+		\sigma (i (t_i)) \, & = \frac{\sigma_F}
+{L_{1/2}\ln(1.0001)\sqrt{p (i(t_i))}}\, 
+	\end{aligned}
+\]
+
+And assign:
+
+\[
+	\begin{aligned}
+		\mu (i (t_i))\, &= \, \frac{\mu_F}{L_{1/2}\sqrt{p \, (t_i)}}
+-\frac{\sigma_F^2}{2L_{1/2}^2p (i(t_i))}
+	\end{aligned}
+\]
+
+We need to find a linear map:
+
+\[
+	\begin{aligned}
+		\ln \bigg ( \sigma (i (t_i))\bigg ) &= \ln (\sigma_F) - \Big ( \ln L_{1/2} + \ln \ln 1.0001 + \ln \sqrt{p (i (t_i))}\Big) \\
+		&= \, \underbrace{
+\ln\left(
+\frac{\sigma_F}
+{L_{1/2}\ln(1.0001)}
+\right)
+}_{\alpha}
+-
+\underbrace{\ln(1.0001)}_{\beta}
+\,i(t_i)
+	\end{aligned}
+\]
+
+So **\(\ln\sigma\) is affine in tick \(i\)**, and, the original nonlinear relation can be recovered as
+
+$$
+\boxed{
+\sigma (i)=e^{\alpha-\beta \, i}.
+}
+$$
+
+
+Then if the state-space represenation is writtin in logs. We have:
+
+\[
+	\begin{aligned}
+		C = - \ln (1.0001)
+	\end{aligned}
+\]
+And:
+\[
+	\begin{aligned}
+		i(t_i) = A\cdot i(t_{i-1}) + B \cdot u \\
+		\ln \sigma (t_i) = C \cdot i(t_{i}) + D \cdot u 
+	\end{aligned}
+\]
+
+with \(D = 0\) and \(\sigma (N) = \bar \sigma \iff \ln \sigma (N) = \ln \bar \sigma\), implies that we have found the enpoint of the path:
+
+\[
+	\begin{aligned}
+		i(N) = \frac{\alpha \, -\, \ln \bar \sigma}{\ln (1.0001)}
+	\end{aligned}
+\]
+
+Since \(\Delta i (t_i) \equiv i (t_i) - i (t_{i-1})\);
+
+We have:
+
+\[
+	\begin{aligned}
+		\ln (\Delta i(t_j)) \, &= \, a_{\mu} \, + \ln (1.0001) \, i(t_j) \, + \, \ln (\bar \Delta t) \, + \, a_{\sigma} - \ln (1.0001)\, \frac{i (t_j)}{2} \, + \, \ln (\Delta W (t_j))\\
+	&= \, a_{\sigma, \mu} \, + \ln (1.0001) \, \frac{i (t_j)}{2} \, + \,\ln\Big(\bar \Delta t \cdot\Delta W (t_j)\Big)		
+	\end{aligned}
+\]
+
+
+Where:
+
+\[
+	\begin{aligned}
+		a_{\sigma, \mu} = a_{\sigma} + a_{\mu} \\
+		\\
+		a_{\sigma} \equiv \ln \Big(\frac{\sigma_F}{L_{1/2}\, \ln (1.0001)}\Big) \, \quad \, a_{\mu} = \ln \Big (\frac{4\,L_{1/2} \mu_F }{\sigma_F^2}\Big)
+	\end{aligned}
+\]
+
+
+ 
+\[
+	\begin{aligned}
+		\Delta i (t_i) \, &= \, (A -1 )\, i (t_{i-1}) \, + \, B \, u \\
+		\\
+		(\ln 1.0001)^{-1}\,\cdot  \mu (i (t_i)) \, \bar \Delta t \, + \, \sigma (i (t_i)) \, \Delta W (t_i)\, &= \, (A -1 )\, i (t_{i-1}) \, + \, B \, u
+	\end{aligned}
+\]
+
+We are looking for a injective mapping \(g: i \to i\)  with (recoverabe inverse) such that:
+
+\[
+	\begin{aligned}
+	   1. g (\Delta (i (t_j))) = a_{\sigma, \mu} \, + \beta\, i(t_j) \, \quad \text{Linearity}\\
+	   2. g (\Delta (i (t_j))) = g(i \, (t_j)) \, \otimes \, g (i \, (t_{j-1})) \quad \text{Separability}
+	\end{aligned}
+\]
+
+> Note \(g \leftarrow \ln ) fullfills 1. BUT not 2
+
