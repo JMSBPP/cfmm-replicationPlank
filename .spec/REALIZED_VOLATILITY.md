@@ -8,13 +8,7 @@
 \]
 `
 ``
-We can create a cron that serves as a foundry script that generates TickHIstory taht realizes a level of volatility. This is:
-
-Given that we have 12 seconds per block AND we have a limit of 30_000_000 gas per block, we are faced an optimization problem:
-
-We need the minimum number, ContractualVaultPayoff is a vault that tracks the contractual payoff value measured in numeriaire as vol
-
-Define the constant:
+Define the type :
 
 \[
 \begin{aligned}
@@ -55,7 +49,7 @@ TickState{
 }     |                                          ----^ 
        -------> TickAverage {                   |
 	                i_{u}                       |
-					update (tickState.get())    |
+ update (tickState.get())    |
 					get()   --------------------
                  }
 
@@ -252,7 +246,15 @@ Note:
 Note that under this transformation we have the lag identity
 \(g(i(t_j)) = g(\Delta i(t_j))\, g(i(t_{j-1}))\).
 
-### Control layer (restart — \(g\)-space)
+
+And the state-space:
+
+\[
+	\begin{aligned}
+		g(i(t_j)) = g(\Delta i(t_j))\, g(i(t_{j-1})) \\
+		\ln\sigma\big(i(t_j)\big)=\alpha - \beta \, i (t_j)
+	\end{aligned}
+\]
 
 State and output:
 
@@ -265,30 +267,7 @@ State and output:
 
 with lag identity \(x_j = x_{j-1}\cdot g(\Delta i_j)\).
 
-**Design (Shape B).** Treat exogenous PRNG shocks as the input, \(u_j=\varepsilon_j\) (seed⊕`blockhash`). Leave open design space for \(A,B\) in a \(g\)-native state equation (multiplicative form preferred for forge cron), e.g.
-
-\[
-	x_j = A\, x_{j-1} \cdot \Phi(B, u_j)
-	\quad\text{or}\quad
-	x_j = A\, x_{j-1} + B\, u_j
-\]
-
-(Aristotle proposes the exact \(\Phi\) / linear form), such that the terminal output hits the target:
-
-\[
-	y_N = \ln\bar\sigma \iff x_N = e^{\alpha}/\bar\sigma.
-\]
-
-**Cron evaluation order.** Obtain \(\varepsilon\) → instantiate designed \(A,B\) (may depend on \(\bar\sigma\), \(x_0\), and if needed on \(\varepsilon\)) → emit \(\{x_j\}\) (hence \(\{i_j=\ln x_j/\beta\}\)).
-
-**Out of scope.** Opaque IVT-only \(\kappa^\star\) without an explicit formula; on-chain commit–reveal protocol; Plank types.
-
-### Control layer (formalized — \(g\)-space)
-
-Lean: `.spec/REALIZED_VOLATILITY.lean/d9917276-397c-415e-bc84-ed728ad72ce5_aristotle/`  
-Module: `RequestProject/TickGSpaceControl.lean` (task `d9917276-…`).
-
-Multiplicative recursion with explicit gains:
+Treat exogenous PRNG shocks as the input, \(u_j=\varepsilon_j\) (seed⊕`blockhash`). Multiplicative recursion with explicit gains:
 
 \[
 	\begin{aligned}
@@ -300,7 +279,20 @@ Multiplicative recursion with explicit gains:
 	\end{aligned}
 \]
 
-Shock stream enters only via the finite sum \(\sum b_j\varepsilon_j\) (cron: one pass). Proved: \(x_N=e^{\alpha}/\bar\sigma\), \(y_N=\ln\bar\sigma\), lag identity \(x_j=x_{j-1}\cdot g(\Delta i_j)\), \(\sigma=e^{\alpha}/x\). No IVT / `Classical.choose`.
+**Canonical \(b_j\) (Lamperti).** The per-step log-gain schedule is deterministic (not solved from \(\varepsilon\)):
 
-Prior \(i\)-space drift-scale artifact (superseded): [ad1c3b4c…](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/).
+\[
+	\begin{aligned}
+		b_j &= \beta\,\sigma_j\,\sqrt{\bar dt},
+	\end{aligned}
+\]
 
+so a unit shock moves \(\ln x=\beta i\) by \(b_j\varepsilon_j\), and the induced tick Euler step has volatility exactly \(\sigma_j\). Here \(\{\sigma_j\}\) is a fixed schedule (constant \(\sigma\), or \(\sigma(i)\) along a reference path); it is not re-fit from the realized shocks. With this choice,
+
+\[
+	\begin{aligned}
+		i_j &= i_{j-1} + \frac{\texttt{lnGainA}}{\beta} + \sigma_j\sqrt{\bar dt}\,\varepsilon_j.
+	\end{aligned}
+\]
+
+Shock stream enters only via the finite sum \(\sum b_j\varepsilon_j\) (cron: one pass). Proved: \(x_N=e^{\alpha}/\bar\sigma\), \(y_N=\ln\bar\sigma\), lag identity \(x_j=x_{j-1}\cdot g(\Delta i_j)\), \(\sigma=e^{\alpha}/x\).

@@ -40,7 +40,7 @@
 - Consumes: locked decisions in the design spec (open-loop, diffusion-shaped, drift-scale, PRNG \(\varepsilon\), Aristotle fill-gaps)
 - Produces: normative “Control layer (requirements)” section in the md for the continue prompt to cite
 
-- [ ] **Step 1: Show the chunk for approval**
+- [x] **Step 1: Show the chunk for approval**
 
 Replace the trailing incomplete prose (from “This helps tiying the state variable…” inclusive) with:
 
@@ -72,20 +72,11 @@ This ties the state to its lag under \(g\), but does not yet steer the path to t
 
 Present this hunk to the maintainer with options **approve** / **modify**. Do not commit until approved.
 
-- [ ] **Step 2: Apply the approved edit**
+- [x] **Step 2: Apply the approved edit**
 
 Apply the replacement in `.spec/REALIZED_VOLATILITY.md` exactly as approved (or as modified).
 
-- [ ] **Step 3: Commit**
-
-```bash
-git add .spec/REALIZED_VOLATILITY.md
-git commit -m "$(cat <<'EOF'
-docs: lock realized-vol drift-scale control requirements
-
-EOF
-)"
-```
+- [x] **Step 3: Commit** (`2c02182`, via `git add -f` — `.spec/` is gitignored)
 
 ---
 
@@ -100,50 +91,9 @@ EOF
 - Consumes: Task 1 requirements text + design prompt draft
 - Produces: Aristotle task id + COMPLETE status (or COMPLETE_WITH_ERRORS with sorry-free Lean still expected — verify in Task 4)
 
-- [ ] **Step 1: Authenticate and confirm project**
-
-```bash
-set -a && source .env && set +a
-aristotle show be429bef-1ac0-407a-85ec-48d1aa157201
-```
-
-Expected: project reachable; status IDLE (or equivalent ready-to-continue).
-
-- [ ] **Step 2: Submit continue**
-
-`aristotle continue` takes positional `project_id` and `prompt` (optional `--files`, `--wait`). Build the prompt then pass it as one argument; attach the updated md:
-
-```bash
-PROMPT=$(cat <<'EOF'
-Continue from TickDualMapping / g(i)=exp(β·i) as given — do not reopen the affine ⊗ no-go.
-
-We need the open-loop base control layer for a forge-script cron that emits a TickHistory
-realizing target σ̄. Requirements (normative) — also in the attached
-.spec/REALIZED_VOLATILITY.md Control layer section:
-
-- Diffusion-shaped discrete tick path from the realized-vol md SDE (μ(i), σ(i), ΔW).
-- Noise ε_j is exogenous (Solidity pattern: sealed seed ⊕ future blockhash → PRNG). Treat
-  {ε_j} as an arbitrary fixed sequence; do not solve for the shocks.
-- Pin the terminal by a single drift scale κ: μ_κ = κ·μ(·) (or equivalent one-parameter
-  drift family) so that i_N = i(N) = (α − ln σ̄)/β.
-- Prove: for any fixed {ε_j}, κ* exists constructively (or uniquely under stated
-  hypotheses) with i_N = i(N); path well-defined; σ(i) profile preserved.
-- Output Lean: the recursion, κ* construction, and a short summary of forge evaluation
-  order: obtain ε → solve κ* → emit {i_j}.
-
-Stay sorry-free. New module under RequestProject/ is fine.
-EOF
-)
-
-aristotle continue be429bef-1ac0-407a-85ec-48d1aa157201 "$PROMPT" \
-  --mode instruct \
-  --files .spec/REALIZED_VOLATILITY.md \
-  --wait
-```
-
-- [ ] **Step 3: Record task id**
-
-From CLI output / `aristotle tasks be429bef-1ac0-407a-85ec-48d1aa157201 --limit 3`, note the new task UUID for download.
+- [x] **Step 1: Authenticate and confirm project**
+- [x] **Step 2: Submit continue** (task `ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44`)
+- [x] **Step 3: Record task id** (`ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44`)
 
 ---
 

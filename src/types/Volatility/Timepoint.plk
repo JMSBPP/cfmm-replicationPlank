@@ -3,8 +3,6 @@ import pos_spec::TickVolatility::*;
 const INIT_STORAGE_INDEX = 0;
 const INIT_TIME_WINDOW = 0;
 
-// Local copy of the Algebra-style realized-vol increment (was RealizedVolatilityLib).
-// Restoring the full lib under lib/Volatility/ is deferred; create_timepoint needs this only.
 const calculate_realized_volatility = fn(
     avg_tick0: u256,
     avg_tick1: u256,
