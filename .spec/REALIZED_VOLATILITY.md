@@ -210,7 +210,7 @@ Then if the state-space represenation is writtin in logs. We have:
 
 \[
 	\begin{aligned}
-		C = - \ln (1.0001)
+		C = -\beta=- \ln (1.0001)
 	\end{aligned}
 \]
 And:
@@ -231,44 +231,58 @@ with \(D = 0\) and \(\sigma (N) = \bar \sigma \iff \ln \sigma (N) = \ln \bar \si
 
 Since \(\Delta i (t_i) \equiv i (t_i) - i (t_{i-1})\);
 
-We have:
+Define:
 
 \[
 	\begin{aligned}
-		\ln (\Delta i(t_j)) \, &= \, a_{\mu} \, + \ln (1.0001) \, i(t_j) \, + \, \ln (\bar \Delta t) \, + \, a_{\sigma} - \ln (1.0001)\, \frac{i (t_j)}{2} \, + \, \ln (\Delta W (t_j))\\
-	&= \, a_{\sigma, \mu} \, + \ln (1.0001) \, \frac{i (t_j)}{2} \, + \,\ln\Big(\bar \Delta t \cdot\Delta W (t_j)\Big)		
+		g \, ( i (t_j)) \, \equiv \, \exp (\beta \, \cdot \, i (t_j))
 	\end{aligned}
 \]
 
 
-Where:
+Note:
 
 \[
 	\begin{aligned}
-		a_{\sigma, \mu} = a_{\sigma} + a_{\mu} \\
+		g (\Delta i (t_j)) \, &= \frac{g \, ( i (t_j))}{g \, ( i (t_{j-1}))}; \, \quad i (g(i (t_j))) = \frac{\ln(g(i (t_j)))}{\beta}
+	\end{aligned}
+\]
+
+
+Note that under this transformation we have:
+
+\[
+	\begin{aligned}
+		i (t_j) \, = A\, i (t_{j-1}) + B\, u(t_j)\\
+		\\ 
+		\implies \, \langle B = 0;\, g(A) = g (\Delta i (t_j))\,\rangle \\
 		\\
-		a_{\sigma} \equiv \ln \Big(\frac{\sigma_F}{L_{1/2}\, \ln (1.0001)}\Big) \, \quad \, a_{\mu} = \ln \Big (\frac{4\,L_{1/2} \mu_F }{\sigma_F^2}\Big)
+		
+		g (i (t_j)) \, = \, g (\Delta i (t_j)) \, g \, ( i (t_{j-1}))
 	\end{aligned}
 \]
 
 
- 
-\[
-	\begin{aligned}
-		\Delta i (t_i) \, &= \, (A -1 )\, i (t_{i-1}) \, + \, B \, u \\
-		\\
-		(\ln 1.0001)^{-1}\,\cdot  \mu (i (t_i)) \, \bar \Delta t \, + \, \sigma (i (t_i)) \, \Delta W (t_i)\, &= \, (A -1 )\, i (t_{i-1}) \, + \, B \, u
-	\end{aligned}
-\]
+This ties the state to its lag under \(g\), but does not yet steer the path to target volatility.
 
-We are looking for a injective mapping \(g: i \to i\)  with (recoverabe inverse) such that:
+### Control layer (requirements)
 
-\[
-	\begin{aligned}
-	   1. g (\Delta (i (t_j))) = a_{\sigma, \mu} \, + \beta\, i(t_j) \, \quad \text{Linearity}\\
-	   2. g (\Delta (i (t_j))) = g(i \, (t_j)) \, \otimes \, g (i \, (t_{j-1})) \quad \text{Separability}
-	\end{aligned}
-\]
+**Goal.** Open-loop forge-cron schedule: diffusion-shaped tick path; noise from the Solidity seed⊕`blockhash` PRNG; one drift scalar pins \(i(N)\) implied by target \(\bar\sigma\).
 
-> Note \(g \leftarrow \ln ) fullfills 1. BUT not 2
+**Given.**
 
+- \(\sigma(i)=e^{\alpha-\beta i}\), \(\beta=\ln 1.0001\), \(g(i)=e^{\beta i}\), inverse \(i=\ln(g(i))/\beta\).
+- Terminal: \(\sigma(N)=\bar\sigma \implies i(N)=(\alpha-\ln\bar\sigma)/\beta\).
+- Discrete tick increment form from the net-flow section (\(\mu(i),\sigma(i),\Delta W\)), with \(\Delta W_j=\sqrt{\bar dt}\,\varepsilon_j\).
+
+**Requirements.**
+
+1. **Inputs:** \(i(0)\), \(\bar\sigma\) (hence \(i(N)\)), \(\bar dt\), \(N\), and a fixed PRNG stream \(\{\varepsilon_j\}_{j=1}^{N}\) (abstract; interpret as derived from `keccak(seed, blockhash, j)`).
+2. **Recursion:** Propose \(i_j=i_{j-1}+\Delta i_j(\mu_\kappa,\varepsilon_j)\) where the drift is a one-parameter family \(\mu_\kappa=\kappa\cdot\mu(\cdot)\) (or an equivalent single scalar on the md drift).
+3. **Pin:** For any fixed \(\{\varepsilon_j\}\), construct (or uniquely determine) \(\kappa^\star\) such that \(i_N=i(N)\).
+4. **Preserve:** Keep the diffusion-coefficient / \(\sigma(i)\) profile; **do not** refit or replace \(\varepsilon_j\).
+5. **Output:** \(\{i_j\}_{j=0}^{N}\) and \(\kappa^\star\), sufficient for a forge script to evaluate the path after \(\varepsilon\) is known.
+
+**Out of scope for the formalization.** On-chain commit–reveal protocol, gas batching, Plank `TickState` / factory types.
+
+**Forge evaluation order (consumer).** Obtain \(\varepsilon\) → solve \(\kappa^\star\) → emit \(\{i_j\}\).
