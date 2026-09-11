@@ -249,31 +249,39 @@ Note:
 \]
 
 
-Note that under this transformation we have:
+Note that under this transformation we have the lag identity
+\(g(i(t_j)) = g(\Delta i(t_j))\, g(i(t_{j-1}))\).
+
+### Control layer (restart — \(g\)-space)
+
+State and output:
 
 \[
 	\begin{aligned}
-		i (t_j) \, = A\, i (t_{j-1}) + B\, u(t_j)\\
-		\\ 
-		\implies \, \langle B = 0;\, g(A) = g (\Delta i (t_j))\,\rangle \\
-		\\
-		
-		g (i (t_j)) \, = \, g (\Delta i (t_j)) \, g \, ( i (t_{j-1}))
+		x_j &= g\big(i(t_j)\big)=e^{\beta\, i(t_j)}, \\
+		y_j &= \ln\sigma\big(i(t_j)\big)=\alpha-\ln x_j,
 	\end{aligned}
 \]
 
+with lag identity \(x_j = x_{j-1}\cdot g(\Delta i_j)\).
 
-[Control](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/)  
-
-Recursion (Euler, drift-scaled):
+**Design (Shape B).** Treat exogenous PRNG shocks as the input, \(u_j=\varepsilon_j\) (seed⊕`blockhash`). Leave open design space for \(A,B\) in a \(g\)-native state equation (multiplicative form preferred for forge cron), e.g.
 
 \[
-	\begin{aligned}
-		i_j &= i_{j-1} + \kappa\, D(i_{j-1}) + S(i_{j-1})\,\varepsilon_j, \\
-		D(i) &= \tfrac{\bar dt}{\beta}\,\mu(i), \qquad
-		S(i) = \sigma(i)\,\sqrt{\bar dt},
-	\end{aligned}
+	x_j = A\, x_{j-1} \cdot \Phi(B, u_j)
+	\quad\text{or}\quad
+	x_j = A\, x_{j-1} + B\, u_j
 \]
 
-with \(\{\varepsilon_j\}\) exogenous (never refit). On the tick bucket, \(D,S\) are evaluated at the clamped state.
+(Aristotle proposes the exact \(\Phi\) / linear form), such that the terminal output hits the target:
+
+\[
+	y_N = \ln\bar\sigma \iff x_N = e^{\alpha}/\bar\sigma.
+\]
+
+**Cron evaluation order.** Obtain \(\varepsilon\) → instantiate designed \(A,B\) (may depend on \(\bar\sigma\), \(x_0\), and if needed on \(\varepsilon\)) → emit \(\{x_j\}\) (hence \(\{i_j=\ln x_j/\beta\}\)).
+
+**Out of scope.** Opaque IVT-only \(\kappa^\star\) without an explicit formula; on-chain commit–reveal protocol; Plank types.
+
+Prior \(i\)-space drift-scale artifact (superseded for control): [ad1c3b4c…](.spec/REALIZED_VOLATILITY.lean/ad1c3b4c-d1bc-49d4-b32a-a568e6d09a44_aristotle/).
 
